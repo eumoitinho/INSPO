@@ -80,12 +80,18 @@ export default function ClientDashboard() {
   const fetchDashboardData = async () => {
     try {
       // Get client slug from session
-      const clientSlug = session?.user?.email?.split('@')[0] || 'default'
+      const clientSlug = session?.user?.email?.split('@')[0] || session?.user?.slug || 'default'
       
       const response = await fetch(`/api/dashboard/${clientSlug}`)
       if (response.ok) {
         const data = await response.json()
-        setDashboardData(data.data)
+        if (data.success) {
+          setDashboardData(data.data)
+        } else {
+          console.error("Failed to fetch dashboard data:", data.message)
+        }
+      } else {
+        console.error("Failed to fetch dashboard data:", response.status)
       }
     } catch (error) {
       console.error("Error fetching dashboard data:", error)
@@ -110,41 +116,30 @@ export default function ClientDashboard() {
     )
   }
 
-  const mockData = {
+  // Fallback data if no dashboard data is available
+  const fallbackData = {
     client: {
       name: session?.user?.name || "Cliente",
       slug: session?.user?.email?.split('@')[0] || "cliente",
-      monthlyBudget: 15000,
+      monthlyBudget: 0,
       portalSettings: {
-        primaryColor: "#3B82F6",
-        secondaryColor: "#8B5CF6",
+        primaryColor: "#d40c1a",
+        secondaryColor: "#006db4",
         allowedSections: ["dashboard", "campanhas", "analytics", "relatorios"]
       }
     },
     metrics: {
-      totalSpend: 12450,
-      totalConversions: 389,
-      averageCPC: 3.20,
-      roas: 4.2,
-      conversionRate: 3.1
+      totalSpend: 0,
+      totalConversions: 0,
+      averageCPC: 0,
+      roas: 0,
+      conversionRate: 0
     },
-    campaigns: [
-      { name: "Campanha Verão", status: "Ativa", budget: 5000, spent: 3200, conversions: 89 },
-      { name: "Black Friday", status: "Pausada", budget: 8000, spent: 4800, conversions: 156 },
-      { name: "Natal 2024", status: "Ativa", budget: 3000, spent: 2100, conversions: 67 }
-    ],
-    chartData: [
-      { day: "Seg", gasto: 1200, conversoes: 45, receita: 5040 },
-      { day: "Ter", gasto: 1800, conversoes: 67, receita: 7560 },
-      { day: "Qua", gasto: 1500, conversoes: 52, receita: 6300 },
-      { day: "Qui", gasto: 2100, conversoes: 78, receita: 8820 },
-      { day: "Sex", gasto: 1900, conversoes: 69, receita: 8190 },
-      { day: "Sáb", gasto: 2200, conversoes: 82, receita: 9240 },
-      { day: "Dom", gasto: 1750, conversoes: 63, receita: 7350 }
-    ]
+    campaigns: [],
+    chartData: []
   }
 
-  const data = dashboardData || mockData
+  const data = dashboardData || fallbackData
 
   return (
     <div className="min-h-screen bg-background">
