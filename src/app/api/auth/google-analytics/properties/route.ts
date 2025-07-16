@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
+import { connectToDatabase, findClientBySlug } from '@/lib/mongodb';
+import { decryptCredentials } from '@/lib/encryption';
 
 /**
  * GET /api/auth/google-analytics/properties?clientSlug=client-name
@@ -17,19 +19,20 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // TODO: Buscar cliente e suas credenciais quando MongoDB estiver configurado
-    // const client = await Client.findOne({ slug: clientSlug });
-    const client = { slug: clientSlug, googleAnalyticsConnected: true, googleAnalyticsCredentials: '{}' }; // Mock para build
+    await connectToDatabase();
+    
+    // Buscar cliente e suas credenciais no banco de dados
+    const client = await findClientBySlug(clientSlug);
 
-    if (!client || !client.googleAnalyticsConnected || !client.googleAnalyticsCredentials) {
+    if (!client || !client.googleAnalytics?.connected || !client.googleAnalytics?.encryptedCredentials) {
       return NextResponse.json({
         error: 'CLIENT_NOT_AUTHORIZED',
         message: 'Cliente não está autorizado no Google Analytics'
       }, { status: 401 });
     }
 
-    // Recuperar tokens salvos
-    const credentials = JSON.parse(client.googleAnalyticsCredentials);
+    // Recuperar tokens salvos (criptografados)
+    const credentials = decryptCredentials(client.googleAnalytics.encryptedCredentials);
     
     // Configurar OAuth2 client
     const oauth2Client = new google.auth.OAuth2(
@@ -68,17 +71,19 @@ export async function GET(request: NextRequest) {
     if (error.code === 401) {
       const clientSlug = new URL(request.url).searchParams.get('clientSlug');
       if (clientSlug) {
-        // TODO: Limpar conexão quando MongoDB estiver configurado
-        /*
-        await Client.findOneAndUpdate(
-          { slug: clientSlug },
-          {
-            'googleAnalytics.connected': false,
-            'googleAnalytics.encryptedCredentials': null
-          }
-        );
-        */
-        console.log('Token expirado para cliente:', clientSlug);
+        try {
+          const { Client } = await import('@/lib/mongodb');
+          await (Client as any).findOneAndUpdate(
+            { slug: clientSlug },
+            {
+              'googleAnalytics.connected': false,
+              'googleAnalytics.encryptedCredentials': null
+            }
+          );
+          console.log('Token expirado para cliente:', clientSlug);
+        } catch (updateError) {
+          console.error('Erro ao limpar conexão:', updateError);
+        }
       }
     }
     

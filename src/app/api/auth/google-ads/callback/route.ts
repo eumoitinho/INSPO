@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
+import { connectToDatabase } from '@/lib/mongodb';
+import { encryptCredentials } from '@/lib/encryption';
 
 // OAuth2 setup para Google Ads
 const oauth2Client = new google.auth.OAuth2(
@@ -61,25 +63,27 @@ export async function GET(request: NextRequest) {
       // Não é um erro crítico, apenas registramos
     }
 
-    // TODO: Salvar tokens no banco de dados (criptografados) quando MongoDB estiver configurado
-    /*
-    const client = await Client.findOneAndUpdate(
+    // Salvar tokens no banco de dados (criptografados)
+    await connectToDatabase();
+    const { Client } = await import('@/lib/mongodb');
+    
+    const encryptedCredentials = encryptCredentials({
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+      token_type: tokens.token_type,
+      expiry_date: tokens.expiry_date,
+      scope: tokens.scope
+    });
+
+    const client = await (Client as any).findOneAndUpdate(
       { slug: state },
       {
         'googleAds.connected': true,
         'googleAds.lastSync': new Date(),
-        'googleAds.encryptedCredentials': JSON.stringify({
-          access_token: tokens.access_token,
-          refresh_token: tokens.refresh_token,
-          token_type: tokens.token_type,
-          expiry_date: tokens.expiry_date,
-          scope: tokens.scope
-        })
+        'googleAds.encryptedCredentials': encryptedCredentials
       },
       { new: true }
     );
-    */
-    const client = { slug: state }; // Mock para build
 
     console.log('✅ Google Ads conectado para cliente:', state);
     console.log('🎯 Contas encontradas:', customerAccounts.length);

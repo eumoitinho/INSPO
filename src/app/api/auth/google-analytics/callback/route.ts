@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
+import { connectToDatabase, findClientBySlug } from '@/lib/mongodb';
+import { encryptCredentials } from '@/lib/encryption';
 
 // OAuth2 setup para Google Analytics
 const oauth2Client = new google.auth.OAuth2(
@@ -47,25 +49,27 @@ export async function GET(request: NextRequest) {
       console.warn('Não foi possível listar propriedades:', propError);
     }
 
-    // TODO: Salvar tokens no banco de dados (criptografados) quando MongoDB estiver configurado
-    /*
-    const client = await Client.findOneAndUpdate(
+    // Salvar tokens no banco de dados (criptografados)
+    await connectToDatabase();
+    const { Client } = await import('@/lib/mongodb');
+    
+    const encryptedCredentials = encryptCredentials({
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+      token_type: tokens.token_type,
+      expiry_date: tokens.expiry_date,
+      scope: tokens.scope
+    });
+
+    const client = await (Client as any).findOneAndUpdate(
       { slug: state },
       {
         'googleAnalytics.connected': true,
         'googleAnalytics.lastSync': new Date(),
-        'googleAnalytics.encryptedCredentials': JSON.stringify({
-          access_token: tokens.access_token,
-          refresh_token: tokens.refresh_token,
-          token_type: tokens.token_type,
-          expiry_date: tokens.expiry_date,
-          scope: tokens.scope
-        })
+        'googleAnalytics.encryptedCredentials': encryptedCredentials
       },
       { new: true }
     );
-    */
-    const client = { slug: state }; // Mock para build
 
     console.log('✅ Google Analytics conectado para cliente:', state);
     console.log('📊 Propriedades encontradas:', properties.length);

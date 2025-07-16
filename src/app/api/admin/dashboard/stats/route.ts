@@ -53,4 +53,4 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       timestamp: new Date().toISOString(),
     }, { status: 500 });
   }
-}
+} 

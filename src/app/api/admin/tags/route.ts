@@ -100,4 +100,4 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 function getRandomColor() {
   const colors = ['primary', 'success', 'warning', 'info', 'secondary', 'danger'];
   return colors[Math.floor(Math.random() * colors.length)];
-}
+} 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
+import { connectToDatabase, findClientBySlug } from '@/lib/mongodb';
 
 // OAuth2 setup for Google Analytics
 const oauth2Client = new google.auth.OAuth2(
@@ -24,9 +25,10 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // TODO: Verificar se o cliente existe quando MongoDB estiver configurado
-    // const client = await Client.findOne({ slug: clientSlug });
-    const client = { slug: clientSlug }; // Mock para build
+    await connectToDatabase();
+    
+    // Verificar se o cliente existe no banco de dados
+    const client = await findClientBySlug(clientSlug);
 
     if (!client) {
       return NextResponse.json({

@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { PlusCircle, Search } from "lucide-react"
+import { PlusCircle, Search, AlertCircle } from "lucide-react"
 import ClientCard from "./clients/ClientCard"
+import { getConnectionStatusIcon, formatLastSync } from "@/lib/connection-status"
 
 // Interface baseada no seu Client Model da API
 interface Client {
@@ -13,67 +14,108 @@ interface Client {
   slug: string
   avatar?: string
   monthlyBudget: number
+  status: 'active' | 'pending' | 'inactive'
   googleAds: { connected: boolean }
   facebookAds: { connected: boolean }
   googleAnalytics: { connected: boolean }
+  createdAt: string
+  updatedAt: string
 }
 
-export default function ClientList() {
-  const [clients, setClients] = useState<Client[]>([])
-  const [loading, setLoading] = useState(true)
+const ClientList = () => {
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // TODO: Fetch data from GET /api/admin/clients
-    // Exemplo de como a chamada de API seria feita:
-    /*
-    const fetchClients = async () => {
-      try {
-        const response = await fetch('/api/admin/clients', {
-          headers: { 'Authorization': `Bearer YOUR_JWT_TOKEN` }
-        });
-        const data = await response.json();
-        if (data.success) {
-          setClients(data.data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch clients", error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchClients();
-    */
+  }, []);
 
-    // Usando dados mockados por enquanto
-    const mockData = [
-      {
-        _id: "catalisti-holding",
-        name: "Catalisti Holding",
-        slug: "catalisti-holding",
-        avatar: "/placeholder.svg?width=64&height=64",
-        monthlyBudget: 18000,
-        googleAds: { connected: true },
-        facebookAds: { connected: true },
-        googleAnalytics: { connected: true },
-      },
-      {
-        _id: "abc-evo",
-        name: "ABC EVO",
-        slug: "abc-evo",
-        avatar: "/placeholder.svg?width=64&height=64",
-        monthlyBudget: 10000,
-        googleAds: { connected: true },
-        facebookAds: { connected: true },
-        googleAnalytics: { connected: false },
-      },
-    ]
-    setClients(mockData)
-    setLoading(false)
-  }, [])
+  const fetchClients = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/admin/clients');
+      
+      if (!response.ok) {
+        throw new Error('Erro ao carregar clientes');
+      }
+      
+      const data = await response.json();
+      setClients(data.data || []);
+    } catch (err: unknown) {
+      console.error('Erro ao buscar clientes:', err);
+      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusBadge = (status: 'active' | 'pending' | 'inactive') => {
+    const statusClasses = {
+      active: "bg-primary-subtle text-primary",
+      pending: "bg-primary-subtle text-primary-700",
+      inactive: "bg-primary-subtle text-primary-900"
+    };
+    return (
+      <span className={`badge ${statusClasses[status] || statusClasses.inactive}`}>
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </span>
+    );
+  };
+
+  const getConnectionStatus = (connected: boolean) => {
+    return getConnectionStatusIcon(connected);
+  };
+
+  const formatDate = (dateString: string) => {
+    return formatLastSync(dateString);
+  };
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
+  };
 
   if (loading) {
-    return <div>Carregando clientes...</div> // TODO: Usar LoadingSpinner.jsx
+    return (
+      <div className="row">
+        <div className="col-12">
+          <div className="card">
+            <div className="card-body text-center">
+              <div className="spinner-border" style={{color: '#D00054'}} role="status">
+                <span className="visually-hidden">Carregando...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
+
+  if (error) {
+    return (
+      <div className="row">
+        <div className="col-12">
+          <div className="card">
+            <div className="card-body text-center">
+              <AlertCircle className="text-primary text-4xl mb-3" />
+              <h5>Erro ao carregar clientes</h5>
+              <p className="text-muted">{error}</p>
+              <button 
+                className="btn btn-primary" 
+                onClick={fetchClients}
+              >
+                Tentar novamente
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
 
   return (
     <div className="space-y-6">
@@ -102,3 +144,5 @@ export default function ClientList() {
     </div>
   )
 }
+
+export default ClientList

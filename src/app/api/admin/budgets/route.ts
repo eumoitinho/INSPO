@@ -126,4 +126,4 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       timestamp: new Date().toISOString(),
     }, { status: 500 });
   }
-}
+} 

@@ -90,22 +90,19 @@ export default function Sidebar() {
           >
             <div className="flex items-center gap-3">
               <Image
-                src="https://kokonutui.com/logo.svg"
-                alt="Acme"
-                width={32}
-                height={32}
-                className="flex-shrink-0 hidden dark:block"
-              />
-              <Image
-                src="https://kokonutui.com/logo-black.svg"
-                alt="Acme"
-                width={32}
-                height={32}
+                src="/ninetwo-logo.png"
+                alt="Ninetwo"
+                width={124}
+                height={124}
                 className="flex-shrink-0 block dark:hidden"
               />
-              <span className="text-lg font-semibold hover:cursor-pointer text-gray-900 dark:text-white">
-                KokonutUI
-              </span>
+              <Image
+                src="/ninetwo-logo-dark.png"
+                alt="Ninetwo"
+                width={124}
+                height={124}
+                className="flex-shrink-0 hidden dark:block"
+              />
             </div>
           </Link>
 
@@ -120,7 +117,7 @@ export default function Sidebar() {
                   <NavItem href="/admin/dashboard" icon={Home}>
                     Início
                   </NavItem>
-                  <NavItem href="/admin/clientes" icon={Users2}>
+                  <NavItem href="/admin/clients" icon={Users2}>
                     Clientes
                   </NavItem>
                 </div>
