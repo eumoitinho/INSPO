@@ -47,7 +47,7 @@ interface ClientData {
 }
 
 interface PortalPageProps {
-  params: { client: string }
+  params: { clientId: string }
 }
 
 const QuickActionCard = ({ title, description, icon: Icon, href, color }: {
@@ -99,14 +99,14 @@ export default function PortalPage({ params }: PortalPageProps) {
 
   useEffect(() => {
     fetchClientData()
-  }, [params.client])
+  }, [params.clientId])
 
   const fetchClientData = async () => {
     try {
       setIsLoading(true)
       setError(null)
       
-      const response = await fetch(`/api/admin/clients/${params.client}`)
+      const response = await fetch(`/api/admin/clients/${params.clientId}`)
       const data = await response.json()
       
       if (response.ok) {
@@ -240,28 +240,28 @@ export default function PortalPage({ params }: PortalPageProps) {
             title="Dashboard"
             description="Visualize métricas e performance"
             icon={BarChart3}
-            href={`/portal/${params.client}/dashboard`}
+            href={`/portal/${params.clientId}/dashboard`}
             color="text-blue-500"
           />
           <QuickActionCard
             title="Analytics"
             description="Análise detalhada de dados"
             icon={TrendingUp}
-            href={`/portal/${params.client}/analytics`}
+            href={`/portal/${params.clientId}/analytics`}
             color="text-green-500"
           />
           <QuickActionCard
             title="Campanhas"
             description="Gerencie suas campanhas"
             icon={Target}
-            href={`/portal/${params.client}/campanhas`}
+            href={`/portal/${params.clientId}/campanhas`}
             color="text-purple-500"
           />
           <QuickActionCard
             title="Gráficos"
             description="Visualizações interativas"
             icon={PieChart}
-            href={`/portal/${params.client}/charts`}
+            href={`/portal/${params.clientId}/charts`}
             color="text-orange-500"
           />
         </div>
@@ -277,14 +277,14 @@ export default function PortalPage({ params }: PortalPageProps) {
             title="Relatórios"
             description="Gere e visualize relatórios"
             icon={FileText}
-            href={`/portal/${params.client}/relatorios`}
+            href={`/portal/${params.clientId}/relatorios`}
             color="text-indigo-500"
           />
           <QuickActionCard
             title="Configurações"
             description="Configure seu portal"
             icon={Settings}
-            href={`/portal/${params.client}/configuracoes`}
+            href={`/portal/${params.clientId}/configuracoes`}
             color="text-gray-500"
           />
         </div>

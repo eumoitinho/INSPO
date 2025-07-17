@@ -13,6 +13,7 @@ import {
   DollarSign
 } from "lucide-react"
 import { getConnectionStatusIcon, formatLastSync } from "@/lib/connection-status"
+import { useRouter } from "next/navigation"
 
 interface Client {
   _id: string
@@ -44,6 +45,8 @@ interface ClientCardProps {
 }
 
 const ClientCard = ({ client }: ClientCardProps) => {
+  const router = useRouter()
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -78,6 +81,18 @@ const ClientCard = ({ client }: ClientCardProps) => {
     { name: 'Facebook Ads', connected: client.facebookAds.connected, lastSync: client.facebookAds.lastSync },
     { name: 'Google Analytics', connected: client.googleAnalytics.connected, lastSync: client.googleAnalytics.lastSync }
   ].filter(platform => platform.connected).length;
+
+  const handleDashboardClick = () => {
+    router.push(`/portal/${client.slug}/dashboard`)
+  }
+
+  const handleSettingsClick = () => {
+    router.push(`/portal/${client.slug}/configuracoes`)
+  }
+
+  const handleEditClick = () => {
+    router.push(`/admin/clients/${client.slug}`)
+  }
 
   return (
     <Card className="hover:shadow-lg transition-shadow duration-200">
@@ -153,14 +168,29 @@ const ClientCard = ({ client }: ClientCardProps) => {
 
         {/* Actions */}
         <div className="flex space-x-2 pt-2">
-          <Button size="sm" variant="outline" className="flex-1">
+          <Button 
+            size="sm" 
+            variant="outline" 
+            className="flex-1"
+            onClick={handleEditClick}
+          >
             <Edit className="h-4 w-4 mr-1" />
             Editar
           </Button>
-          <Button size="sm" variant="outline">
+          <Button 
+            size="sm" 
+            variant="outline"
+            onClick={handleDashboardClick}
+            title="Dashboard do Cliente"
+          >
             <BarChart3 className="h-4 w-4" />
           </Button>
-          <Button size="sm" variant="outline">
+          <Button 
+            size="sm" 
+            variant="outline"
+            onClick={handleSettingsClick}
+            title="Configurações"
+          >
             <Settings className="h-4 w-4" />
           </Button>
         </div>
