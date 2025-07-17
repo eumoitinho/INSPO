@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, LogIn, Shield } from "lucide-react"
-import { NinetwoLogo } from "@/components/ui/logo"
+import { NinetwoLogoWithText } from "@/components/ui/logo"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -58,7 +58,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <div className="mx-auto mb-6">
-            <NinetwoLogo width={64} height={64} />
+            <NinetwoLogoWithText width={64} height={64} />
           </div>
           <h1 className="text-3xl font-bold text-foreground font-serif">
             NINETWO DASH
