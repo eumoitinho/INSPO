@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "pnpm --filter @ninetwodash/web dev",
-    "build": "pnpm run build:packages && pnpm --filter @ninetwodash/web build",
+    "build": "pnpm --filter @ninetwodash/web build",
+    "build:all": "pnpm run build:packages && pnpm --filter @ninetwodash/web build",
     "build:packages": "pnpm --filter './packages/**' build",
     "build:modules": "pnpm --filter './modules/**' build",
     "start": "pnpm --filter @ninetwodash/web start",
@@ -12,7 +13,8 @@
     "typecheck": "tsc --noEmit",
     "update-imports": "node scripts/update-imports.js",
     "analyze": "node scripts/context-tools.js analyze",
-    "compress": "node scripts/context-tools.js compress"
+    "compress": "node scripts/context-tools.js compress",
+    "vercel-build": "cd apps/web && pnpm build"
   },
   "devDependencies": {
     "@types/node": "^22",

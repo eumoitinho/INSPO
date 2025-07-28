@@ -1,7 +1,0 @@
-{
-  "buildCommand": "pnpm --filter @ninetwodash/web build",
-  "outputDirectory": "apps/web/.next",
-  "installCommand": "pnpm install",
-  "framework": "nextjs",
-  "ignoreCommand": "git diff HEAD^ HEAD --quiet ."
-}
