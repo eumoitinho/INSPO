@@ -47,11 +47,16 @@ export async function GET(request: NextRequest) {
       prompt: 'consent' // Força a tela de consentimento para garantir refresh token
     });
 
-    return NextResponse.json({
-      success: true,
-      authUrl,
-      message: 'Redirecione o usuário para a URL de autorização do Google Ads'
-    });
+    // Verificar se as credenciais OAuth estão configuradas
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+      return NextResponse.json({
+        error: 'OAUTH_NOT_CONFIGURED',
+        message: 'As credenciais do Google OAuth não estão configuradas. Configure GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET no .env.local'
+      }, { status: 500 });
+    }
+
+    // Redirecionar diretamente para o Google OAuth
+    return NextResponse.redirect(authUrl);
 
   } catch (error: any) {
     console.error('Erro ao iniciar OAuth Google Ads:', error);
