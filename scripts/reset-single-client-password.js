@@ -65,7 +65,7 @@ const Client = mongoose.models.Client || mongoose.model('Client', ClientSchema);
 
 async function resetSingleClientPassword(email) {
   try {
-    // Validar email
+    // Validar emails
     if (!email) {
       console.error('❌ Por favor, forneça o email do cliente');
       console.log('\nUso: node scripts/reset-single-client-password.js [email]');
