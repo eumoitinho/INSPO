@@ -34,8 +34,8 @@ export function FacebookPixelModal({ isOpen, onClose, clientId, onSuccess }: Fac
   })
 
   const handleSave = async () => {
-    if (!credentials.pixel_id || !credentials.access_token) {
-      toast.error("Pixel ID e Access Token são obrigatórios")
+    if (!credentials.pixel_id || !credentials.ad_account_id) {
+      toast.error("Pixel ID e Account ID são obrigatórios")
       return
     }
 

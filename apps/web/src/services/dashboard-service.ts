@@ -67,7 +67,7 @@ export class DashboardService {
   /**
    * Busca dados consolidados do dashboard
    */
-  async getDashboardData(period: '7d' | '30d' | '90d' = '30d'): Promise<DashboardData> {
+  async getDashboardData(period: '7d' | '30d' | '90d' = '30d', enabledSources: string[] = ['googleAds', 'facebookAds', 'googleAnalytics']): Promise<DashboardData> {
     try {
       await connectToDatabase();
       
@@ -95,15 +95,15 @@ export class DashboardService {
       const startDateStr = startDate.toISOString().split('T')[0];
       const endDateStr = endDate.toISOString().split('T')[0];
 
-      // Buscar dados de cada plataforma em paralelo
+      // Buscar dados de cada plataforma em paralelo (apenas das fontes habilitadas)
       const [googleAdsData, facebookAdsData, analyticsData] = await Promise.allSettled([
-        client.googleAds?.connected 
+        client.googleAds?.connected && enabledSources.includes('googleAds')
           ? this.googleAdsService.getCampaignMetrics(startDateStr, endDateStr)
           : Promise.resolve(null),
-        client.facebookAds?.connected
+        client.facebookAds?.connected && enabledSources.includes('facebookAds')
           ? this.facebookAdsService.getAccountInsights(startDateStr, endDateStr)
           : Promise.resolve(null),
-        client.googleAnalytics?.connected
+        client.googleAnalytics?.connected && enabledSources.includes('googleAnalytics')
           ? this.googleAnalyticsService.getAnalyticsData(client.googleAnalytics.propertyId, startDateStr, endDateStr)
           : Promise.resolve(null)
       ]);
@@ -138,7 +138,7 @@ export class DashboardService {
         },
         channelPerformance: this.buildChannelPerformance(gAds, fbAds),
         topCampaigns: this.buildTopCampaigns(gAds, fbAds),
-        dailyMetrics: this.buildDailyMetrics(startDateStr, endDateStr),
+        dailyMetrics: this.buildDailyMetrics(startDateStr, endDateStr, googleAds, facebookAds, analytics),
         devicePerformance: this.buildDevicePerformance(analytics)
       };
 
@@ -217,19 +217,41 @@ export class DashboardService {
   }
 
   /**
-   * Constrói métricas diárias (mock por enquanto)
+   * Constrói métricas diárias baseadas nos dados reais das APIs
    */
-  private buildDailyMetrics(startDate: string, endDate: string): any[] {
+  private buildDailyMetrics(
+    startDate: string, 
+    endDate: string,
+    googleAds?: any,
+    facebookAds?: any,
+    analytics?: any
+  ): any[] {
     const metrics = [];
     const start = new Date(startDate);
     const end = new Date(endDate);
 
+    // Obter dados históricos reais das APIs
+    const googleAdsDaily = googleAds?.dailyStats || [];
+    const facebookDaily = facebookAds?.dailyStats || [];
+    const analyticsDaily = analytics?.dailyStats || [];
+
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const dateStr = d.toISOString().split('T')[0];
+      
+      // Buscar dados reais para a data específica
+      const googleData = googleAdsDaily.find((item: any) => item.date === dateStr);
+      const facebookData = facebookDaily.find((item: any) => item.date === dateStr);
+      const analyticsData = analyticsDaily.find((item: any) => item.date === dateStr);
+
+      const spend = (googleData?.spend || 0) + (facebookData?.spend || 0);
+      const revenue = analyticsData?.revenue || googleData?.revenue || facebookData?.revenue || 0;
+      const conversions = (googleData?.conversions || 0) + (facebookData?.conversions || 0);
+
       metrics.push({
-        date: d.toISOString().split('T')[0],
-        spend: 300 + Math.random() * 200,
-        revenue: 1000 + Math.random() * 500,
-        conversions: 5 + Math.floor(Math.random() * 10)
+        date: dateStr,
+        spend,
+        revenue,
+        conversions
       });
     }
 

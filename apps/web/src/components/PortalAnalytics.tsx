@@ -80,31 +80,7 @@ export default function PortalAnalytics({ clientSlug }: PortalAnalyticsProps) {
       if (response.ok) {
         setAnalyticsData(data.data)
       } else {
-        // Se não há dados reais, usar dados simulados baseados no cliente
-        const mockData: AnalyticsData = {
-          sessions: 1250 + Math.floor(Math.random() * 500),
-          users: 890 + Math.floor(Math.random() * 200),
-          pageviews: 3200 + Math.floor(Math.random() * 1000),
-          bounceRate: 35 + Math.random() * 20,
-          avgSessionDuration: 120 + Math.random() * 60,
-          topPages: [
-            { page: "/", pageviews: 1200, uniquePageviews: 800 },
-            { page: "/produtos", pageviews: 800, uniquePageviews: 600 },
-            { page: "/contato", pageviews: 400, uniquePageviews: 350 },
-            { page: "/sobre", pageviews: 300, uniquePageviews: 250 },
-            { page: "/blog", pageviews: 200, uniquePageviews: 180 }
-          ],
-          deviceData: [
-            { deviceCategory: "desktop", sessions: 800, users: 600 },
-            { deviceCategory: "mobile", sessions: 350, users: 250 },
-            { deviceCategory: "tablet", sessions: 100, users: 80 }
-          ],
-          dateRange: {
-            start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-            end: new Date().toISOString()
-          }
-        }
-        setAnalyticsData(mockData)
+        setError(data.error || 'Erro ao carregar dados de analytics')
       }
     } catch (err) {
       setError('Erro ao carregar dados de analytics')

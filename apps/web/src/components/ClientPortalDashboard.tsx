@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
 import { 
   BarChart3, 
   TrendingUp, 
@@ -117,6 +118,11 @@ export default function ClientPortalDashboard({ clientSlug }: { clientSlug: stri
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('30d')
+  const [selectedSources, setSelectedSources] = useState({
+    googleAds: true,
+    facebookAds: true,
+    googleAnalytics: true
+  })
 
   useEffect(() => {
     fetchClientData()
@@ -126,7 +132,7 @@ export default function ClientPortalDashboard({ clientSlug }: { clientSlug: stri
     if (clientData) {
       fetchDashboardData()
     }
-  }, [clientData, period])
+  }, [clientData, period, selectedSources])
 
   const fetchClientData = async () => {
     try {
@@ -146,7 +152,12 @@ export default function ClientPortalDashboard({ clientSlug }: { clientSlug: stri
     
     setLoading(true)
     try {
-      const response = await fetch(`/api/portal/${clientData._id}/dashboard?period=${period}`)
+      const sources = Object.entries(selectedSources)
+        .filter(([_, enabled]) => enabled)
+        .map(([source, _]) => source)
+        .join(',')
+      
+      const response = await fetch(`/api/portal/${clientData._id}/dashboard?period=${period}&sources=${sources}`)
       const data = await response.json()
       
       if (data.success && data.data) {
@@ -225,6 +236,70 @@ export default function ClientPortalDashboard({ clientSlug }: { clientSlug: stri
           </Button>
         </div>
       </div>
+
+      {/* Seletor de Fontes de Dados */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Target className="h-5 w-5" />
+            Fontes de Dados
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-6">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="googleAds"
+                checked={selectedSources.googleAds}
+                onCheckedChange={(checked) => 
+                  setSelectedSources(prev => ({ ...prev, googleAds: !!checked }))
+                }
+                disabled={!clientData.googleAds.connected}
+              />
+              <label htmlFor="googleAds" className="text-sm font-medium">
+                Google Ads
+                {!clientData.googleAds.connected && (
+                  <Badge variant="secondary" className="ml-2">Desconectado</Badge>
+                )}
+              </label>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="facebookAds"
+                checked={selectedSources.facebookAds}
+                onCheckedChange={(checked) => 
+                  setSelectedSources(prev => ({ ...prev, facebookAds: !!checked }))
+                }
+                disabled={!clientData.facebookAds.connected}
+              />
+              <label htmlFor="facebookAds" className="text-sm font-medium">
+                Facebook Ads
+                {!clientData.facebookAds.connected && (
+                  <Badge variant="secondary" className="ml-2">Desconectado</Badge>
+                )}
+              </label>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="googleAnalytics"
+                checked={selectedSources.googleAnalytics}
+                onCheckedChange={(checked) => 
+                  setSelectedSources(prev => ({ ...prev, googleAnalytics: !!checked }))
+                }
+                disabled={!clientData.googleAnalytics.connected}
+              />
+              <label htmlFor="googleAnalytics" className="text-sm font-medium">
+                Google Analytics
+                {!clientData.googleAnalytics.connected && (
+                  <Badge variant="secondary" className="ml-2">Desconectado</Badge>
+                )}
+              </label>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Status das Conexões */}
       <div className="grid gap-4 md:grid-cols-3">

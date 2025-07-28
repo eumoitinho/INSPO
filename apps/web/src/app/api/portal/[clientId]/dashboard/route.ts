@@ -16,6 +16,8 @@ export async function GET(
     const { clientId } = await params;
     const { searchParams } = new URL(request.url);
     const period = searchParams.get('period') as '7d' | '30d' | '90d' || '30d';
+    const sourcesParam = searchParams.get('sources') || 'googleAds,facebookAds,googleAnalytics';
+    const enabledSources = sourcesParam.split(',').filter(Boolean);
 
     // Verificar se o usuário tem acesso ao cliente
     const userRole = (session.user as any).role;
@@ -27,7 +29,7 @@ export async function GET(
 
     // Buscar dados do dashboard
     const dashboardService = new DashboardService(clientId);
-    const data = await dashboardService.getDashboardData(period);
+    const data = await dashboardService.getDashboardData(period, enabledSources);
 
     return NextResponse.json({
       success: true,
