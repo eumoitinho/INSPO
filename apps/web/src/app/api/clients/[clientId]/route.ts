@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import { authOptions } from "../../auth/[...nextauth]/authOptions"
-import dbConnect from "@/lib/mongodb"
-import Client from "@/models/Client"
+import { authOptions } from "@/lib/auth"
+import { connectToDatabase, Client } from "@/lib/mongodb"
 
 export async function GET(
   request: Request,
@@ -18,7 +17,7 @@ export async function GET(
       )
     }
 
-    await dbConnect()
+    await connectToDatabase()
     
     const { clientId } = await params
     

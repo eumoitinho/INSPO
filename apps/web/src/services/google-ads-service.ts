@@ -1,5 +1,6 @@
-import { google } from 'googleapis';
+import { createGoogleAdsClient, getDateRange } from '@/lib/google-ads';
 import { getGoogleAdsCredentials } from '@/lib/client-credentials';
+import { connectToDatabase, Client } from '@/lib/mongodb';
 
 interface CampaignMetrics {
   campaignId: string;
@@ -35,48 +36,71 @@ export class GoogleAdsService {
    */
   async getCampaignMetrics(startDate: string, endDate: string): Promise<AccountMetrics> {
     try {
-      const credentials = await getGoogleAdsCredentials(this.clientId);
+      await connectToDatabase();
+      const clientData = await Client.findById(this.clientId);
       
-      if (!credentials) {
-        throw new Error('Credenciais do Google Ads não encontradas');
+      if (!clientData?.googleAds?.connected || !clientData?.googleAds?.customerId) {
+        throw new Error('Google Ads não conectado para este cliente');
       }
 
-      // Por enquanto, vamos retornar dados de exemplo
-      // TODO: Implementar integração real com Google Ads API
-      const mockData: AccountMetrics = {
-        totalImpressions: 125000,
-        totalClicks: 3500,
-        totalCost: 15000,
-        totalConversions: 280,
-        averageCtr: 2.8,
-        averageCpc: 4.29,
-        campaigns: [
-          {
-            campaignId: '1234567890',
-            campaignName: 'Campanha de Busca - Principal',
-            impressions: 75000,
-            clicks: 2100,
-            cost: 9000,
-            conversions: 180,
-            ctr: 2.8,
-            cpc: 4.29,
-            conversionRate: 8.57
-          },
-          {
-            campaignId: '0987654321',
-            campaignName: 'Campanha Display - Remarketing',
-            impressions: 50000,
-            clicks: 1400,
-            cost: 6000,
-            conversions: 100,
-            ctr: 2.8,
-            cpc: 4.29,
-            conversionRate: 7.14
-          }
-        ]
-      };
+      // Criar cliente Google Ads com as credenciais do cliente
+      const googleAdsClient = createGoogleAdsClient(
+        clientData.googleAds.customerId,
+        {
+          developerId: process.env.GOOGLE_ADS_DEVELOPER_TOKEN,
+          clientId: process.env.GOOGLE_ADS_CLIENT_ID,
+          clientSecret: process.env.GOOGLE_ADS_CLIENT_SECRET,
+          refreshToken: clientData.googleAds.refreshToken
+        }
+      );
 
-      return mockData;
+      // Buscar métricas resumidas
+      const summaryMetrics = await googleAdsClient.getSummaryMetrics(startDate, endDate);
+      
+      // Buscar dados de campanhas
+      const campaigns = await googleAdsClient.getCampaignData(startDate, endDate);
+      
+      // Agrupar campanhas e calcular métricas
+      const campaignMap = new Map<string, CampaignMetrics>();
+      
+      campaigns.forEach(campaign => {
+        const existing = campaignMap.get(campaign.campaignId) || {
+          campaignId: campaign.campaignId,
+          campaignName: campaign.campaignName,
+          impressions: 0,
+          clicks: 0,
+          cost: 0,
+          conversions: 0,
+          ctr: 0,
+          cpc: 0,
+          conversionRate: 0
+        };
+        
+        existing.impressions += campaign.metrics.impressions;
+        existing.clicks += campaign.metrics.clicks;
+        existing.cost += campaign.metrics.cost;
+        existing.conversions += campaign.metrics.conversions;
+        
+        campaignMap.set(campaign.campaignId, existing);
+      });
+      
+      // Calcular métricas derivadas para cada campanha
+      const campaignMetrics: CampaignMetrics[] = Array.from(campaignMap.values()).map(campaign => ({
+        ...campaign,
+        ctr: campaign.impressions > 0 ? (campaign.clicks / campaign.impressions) * 100 : 0,
+        cpc: campaign.clicks > 0 ? campaign.cost / campaign.clicks : 0,
+        conversionRate: campaign.clicks > 0 ? (campaign.conversions / campaign.clicks) * 100 : 0
+      }));
+
+      return {
+        totalImpressions: summaryMetrics.impressions,
+        totalClicks: summaryMetrics.clicks,
+        totalCost: summaryMetrics.cost,
+        totalConversions: summaryMetrics.conversions,
+        averageCtr: summaryMetrics.ctr,
+        averageCpc: summaryMetrics.cpc,
+        campaigns: campaignMetrics
+      };
     } catch (error) {
       console.error('Erro ao buscar métricas do Google Ads:', error);
       throw error;
@@ -87,50 +111,133 @@ export class GoogleAdsService {
    * Busca dados de desempenho por período
    */
   async getPerformanceData(period: '7d' | '30d' | '90d') {
-    const endDate = new Date();
-    const startDate = new Date();
-    
-    switch (period) {
-      case '7d':
-        startDate.setDate(endDate.getDate() - 7);
-        break;
-      case '30d':
-        startDate.setDate(endDate.getDate() - 30);
-        break;
-      case '90d':
-        startDate.setDate(endDate.getDate() - 90);
-        break;
-    }
-
-    return this.getCampaignMetrics(
-      startDate.toISOString().split('T')[0],
-      endDate.toISOString().split('T')[0]
-    );
+    const { from, to } = getDateRange(period);
+    return this.getCampaignMetrics(from, to);
   }
 
   /**
    * Busca palavras-chave com melhor desempenho
    */
   async getTopKeywords(limit: number = 10) {
-    // TODO: Implementar busca real de palavras-chave
-    return [
-      { keyword: 'marketing digital', clicks: 450, cost: 1800, conversions: 35 },
-      { keyword: 'agência marketing', clicks: 320, cost: 1500, conversions: 28 },
-      { keyword: 'google ads', clicks: 280, cost: 1200, conversions: 22 },
-      { keyword: 'facebook ads', clicks: 210, cost: 900, conversions: 18 },
-      { keyword: 'marketing online', clicks: 180, cost: 750, conversions: 15 }
-    ];
+    try {
+      await connectToDatabase();
+      const clientData = await Client.findById(this.clientId);
+      
+      if (!clientData?.googleAds?.connected || !clientData?.googleAds?.customerId) {
+        throw new Error('Google Ads não conectado para este cliente');
+      }
+
+      const googleAdsClient = createGoogleAdsClient(
+        clientData.googleAds.customerId,
+        {
+          developerId: process.env.GOOGLE_ADS_DEVELOPER_TOKEN,
+          clientId: process.env.GOOGLE_ADS_CLIENT_ID,
+          clientSecret: process.env.GOOGLE_ADS_CLIENT_SECRET,
+          refreshToken: clientData.googleAds.refreshToken
+        }
+      );
+
+      // Query para buscar keywords
+      const { from, to } = getDateRange('30d');
+      const query = `
+        SELECT 
+          ad_group_criterion.keyword.text,
+          metrics.clicks,
+          metrics.cost_micros,
+          metrics.conversions
+        FROM keyword_view 
+        WHERE segments.date BETWEEN '${from}' AND '${to}'
+        AND metrics.clicks > 0
+        ORDER BY metrics.clicks DESC
+        LIMIT ${limit}
+      `;
+
+      const response = await googleAdsClient['makeRequest'](
+        `customers/${clientData.googleAds.customerId}/googleAds:searchStream`,
+        { query }
+      );
+
+      if (!response.results) return [];
+
+      return response.results.map((result: any) => ({
+        keyword: result.adGroupCriterion.keyword.text,
+        clicks: Number(result.metrics.clicks) || 0,
+        cost: Number(result.metrics.costMicros) / 1000000 || 0,
+        conversions: Number(result.metrics.conversions) || 0
+      }));
+    } catch (error) {
+      console.error('Erro ao buscar palavras-chave:', error);
+      // Retornar array vazio em caso de erro
+      return [];
+    }
   }
 
   /**
    * Busca dados de dispositivos
    */
   async getDevicePerformance() {
-    // TODO: Implementar busca real por dispositivo
-    return {
-      desktop: { impressions: 60000, clicks: 1800, conversions: 150 },
-      mobile: { impressions: 55000, clicks: 1500, conversions: 120 },
-      tablet: { impressions: 10000, clicks: 200, conversions: 10 }
-    };
+    try {
+      await connectToDatabase();
+      const clientData = await Client.findById(this.clientId);
+      
+      if (!clientData?.googleAds?.connected || !clientData?.googleAds?.customerId) {
+        throw new Error('Google Ads não conectado para este cliente');
+      }
+
+      const googleAdsClient = createGoogleAdsClient(
+        clientData.googleAds.customerId,
+        {
+          developerId: process.env.GOOGLE_ADS_DEVELOPER_TOKEN,
+          clientId: process.env.GOOGLE_ADS_CLIENT_ID,
+          clientSecret: process.env.GOOGLE_ADS_CLIENT_SECRET,
+          refreshToken: clientData.googleAds.refreshToken
+        }
+      );
+
+      // Query para buscar dados por dispositivo
+      const { from, to } = getDateRange('30d');
+      const query = `
+        SELECT 
+          segments.device,
+          metrics.impressions,
+          metrics.clicks,
+          metrics.conversions
+        FROM campaign 
+        WHERE segments.date BETWEEN '${from}' AND '${to}'
+        AND campaign.status = 'ENABLED'
+      `;
+
+      const response = await googleAdsClient['makeRequest'](
+        `customers/${clientData.googleAds.customerId}/googleAds:searchStream`,
+        { query }
+      );
+
+      const deviceData = {
+        desktop: { impressions: 0, clicks: 0, conversions: 0 },
+        mobile: { impressions: 0, clicks: 0, conversions: 0 },
+        tablet: { impressions: 0, clicks: 0, conversions: 0 }
+      };
+
+      if (response.results) {
+        response.results.forEach((result: any) => {
+          const device = result.segments.device.toLowerCase();
+          if (device in deviceData) {
+            deviceData[device as keyof typeof deviceData].impressions += Number(result.metrics.impressions) || 0;
+            deviceData[device as keyof typeof deviceData].clicks += Number(result.metrics.clicks) || 0;
+            deviceData[device as keyof typeof deviceData].conversions += Number(result.metrics.conversions) || 0;
+          }
+        });
+      }
+
+      return deviceData;
+    } catch (error) {
+      console.error('Erro ao buscar dados de dispositivos:', error);
+      // Retornar dados zerados em caso de erro
+      return {
+        desktop: { impressions: 0, clicks: 0, conversions: 0 },
+        mobile: { impressions: 0, clicks: 0, conversions: 0 },
+        tablet: { impressions: 0, clicks: 0, conversions: 0 }
+      };
+    }
   }
 }

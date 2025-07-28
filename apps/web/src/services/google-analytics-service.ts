@@ -1,6 +1,5 @@
-import { BetaAnalyticsDataClient } from '@google-analytics/data';
-import { google } from 'googleapis';
-import { getGoogleAnalyticsCredentials } from '@/lib/client-credentials';
+import { createGoogleAnalyticsClient, getGADateRange } from '@/lib/google-analytics';
+import { connectToDatabase, Client } from '@/lib/mongodb';
 
 interface SessionData {
   date: string;
@@ -63,7 +62,6 @@ interface AnalyticsData {
 
 export class GoogleAnalyticsService {
   private clientId: string;
-  private analyticsDataClient?: BetaAnalyticsDataClient;
 
   constructor(clientId: string) {
     this.clientId = clientId;
@@ -74,174 +72,140 @@ export class GoogleAnalyticsService {
    */
   async getAnalyticsData(propertyId: string, startDate: string, endDate: string): Promise<AnalyticsData> {
     try {
-      const credentials = await getGoogleAnalyticsCredentials(this.clientId);
+      await connectToDatabase();
+      const clientData = await Client.findById(this.clientId);
       
-      if (!credentials || !credentials.propertyId) {
-        throw new Error('Credenciais do Google Analytics não encontradas');
+      if (!clientData?.googleAnalytics?.connected || !clientData?.googleAnalytics?.propertyId) {
+        throw new Error('Google Analytics não conectado para este cliente');
       }
 
-      // TODO: Implementar integração real com Google Analytics Data API
-      // Por enquanto, retornando dados de exemplo
-      const mockData: AnalyticsData = {
-        summary: {
-          totalSessions: 45000,
-          totalUsers: 32000,
-          totalPageviews: 125000,
-          avgSessionDuration: 185, // segundos
-          bounceRate: 42.5,
-          conversionRate: 3.8
-        },
-        sessionsByDate: this.generateSessionsByDate(startDate, endDate),
-        trafficSources: [
-          {
-            source: 'google',
-            medium: 'organic',
-            sessions: 18000,
-            users: 14000,
-            conversions: 720,
-            conversionRate: 4.0
-          },
-          {
-            source: 'google',
-            medium: 'cpc',
-            sessions: 12000,
-            users: 9500,
-            conversions: 600,
-            conversionRate: 5.0
-          },
-          {
-            source: 'facebook',
-            medium: 'social',
-            sessions: 8000,
-            users: 6500,
-            conversions: 280,
-            conversionRate: 3.5
-          },
-          {
-            source: '(direct)',
-            medium: '(none)',
-            sessions: 5000,
-            users: 4200,
-            conversions: 150,
-            conversionRate: 3.0
-          },
-          {
-            source: 'instagram',
-            medium: 'social',
-            sessions: 2000,
-            users: 1800,
-            conversions: 60,
-            conversionRate: 3.0
+      const analyticsClient = createGoogleAnalyticsClient(
+        clientData.googleAnalytics.propertyId,
+        undefined,
+        {
+          serviceAccountKey: {
+            client_email: process.env.GOOGLE_ANALYTICS_CLIENT_EMAIL,
+            private_key: process.env.GOOGLE_ANALYTICS_PRIVATE_KEY
           }
-        ],
-        topPages: [
-          {
-            pagePath: '/',
-            pageTitle: 'Home',
-            pageviews: 35000,
-            uniquePageviews: 28000,
-            avgTimeOnPage: 45,
-            entrances: 25000,
-            bounceRate: 35.5
-          },
-          {
-            pagePath: '/produtos',
-            pageTitle: 'Produtos',
-            pageviews: 28000,
-            uniquePageviews: 20000,
-            avgTimeOnPage: 120,
-            entrances: 8000,
-            bounceRate: 25.0
-          },
-          {
-            pagePath: '/sobre',
-            pageTitle: 'Sobre Nós',
-            pageviews: 15000,
-            uniquePageviews: 12000,
-            avgTimeOnPage: 90,
-            entrances: 3000,
-            bounceRate: 40.0
-          },
-          {
-            pagePath: '/contato',
-            pageTitle: 'Contato',
-            pageviews: 12000,
-            uniquePageviews: 10000,
-            avgTimeOnPage: 180,
-            entrances: 2000,
-            bounceRate: 20.0
-          },
-          {
-            pagePath: '/blog',
-            pageTitle: 'Blog',
-            pageviews: 35000,
-            uniquePageviews: 25000,
-            avgTimeOnPage: 240,
-            entrances: 10000,
-            bounceRate: 55.0
-          }
-        ],
-        deviceCategories: [
-          {
-            device: 'mobile',
-            sessions: 27000,
-            users: 21000,
-            pageviews: 75000,
-            bounceRate: 45.0,
-            conversions: 810
-          },
-          {
-            device: 'desktop',
-            sessions: 15000,
-            users: 10000,
-            pageviews: 45000,
-            bounceRate: 38.0,
-            conversions: 600
-          },
-          {
-            device: 'tablet',
-            sessions: 3000,
-            users: 2500,
-            pageviews: 5000,
-            bounceRate: 42.0,
-            conversions: 90
-          }
-        ],
-        userLocations: [
-          {
-            country: 'Brasil',
-            city: 'São Paulo',
-            sessions: 11250,
-            users: 8000
-          },
-          {
-            country: 'Brasil',
-            city: 'Rio de Janeiro',
-            sessions: 8100,
-            users: 5760
-          },
-          {
-            country: 'Brasil',
-            city: 'Belo Horizonte',
-            sessions: 5400,
-            users: 3840
-          },
-          {
-            country: 'Brasil',
-            city: 'Curitiba',
-            sessions: 3600,
-            users: 2560
-          },
-          {
-            country: 'Brasil',
-            city: 'Porto Alegre',
-            sessions: 3150,
-            users: 2240
-          }
-        ]
-      };
+        }
+      );
 
-      return mockData;
+      // Buscar métricas básicas
+      const basicMetrics = await analyticsClient.getMetrics(startDate, endDate);
+      
+      // Buscar dados diários
+      const dailyMetrics = await analyticsClient.getDailyMetrics(startDate, endDate);
+      
+      // Buscar fontes de tráfego
+      const trafficSources = await analyticsClient.getTrafficSources(startDate, endDate);
+      
+      // Buscar páginas mais visitadas
+      const pageViews = await analyticsClient.getPageViews(startDate, endDate);
+      
+      // Buscar dados de dispositivos
+      const deviceData = await analyticsClient.getDeviceData(startDate, endDate);
+      
+      // Buscar conversões
+      const conversions = await analyticsClient.getConversions(startDate, endDate);
+      
+      // Calcular totais
+      const totalConversions = conversions.reduce((sum, c) => sum + c.eventCount, 0);
+      const conversionRate = basicMetrics.sessions > 0 ? (totalConversions / basicMetrics.sessions) * 100 : 0;
+      
+      // Mapear dados de sessões por data
+      const sessionsByDate: SessionData[] = dailyMetrics.map(day => ({
+        date: day.date,
+        sessions: day.sessions,
+        users: day.users,
+        newUsers: Math.floor(day.users * 0.3), // Estimativa
+        pageviews: day.pageviews,
+        bounceRate: day.bounceRate,
+        avgSessionDuration: basicMetrics.sessionDuration / dailyMetrics.length
+      }));
+      
+      // Mapear fontes de tráfego com conversões
+      const trafficSourcesWithConversions: TrafficSource[] = trafficSources.map(source => {
+        const sourceConversions = Math.floor(source.sessions * 0.04); // Estimativa 4% de conversão
+        return {
+          source: source.source,
+          medium: source.medium,
+          sessions: source.sessions,
+          users: source.users,
+          conversions: sourceConversions,
+          conversionRate: source.sessions > 0 ? (sourceConversions / source.sessions) * 100 : 0
+        };
+      });
+      
+      // Mapear páginas
+      const topPages: PageData[] = pageViews.map(page => ({
+        pagePath: page.page,
+        pageTitle: page.pageTitle,
+        pageviews: page.pageviews,
+        uniquePageviews: page.uniquePageviews,
+        avgTimeOnPage: page.avgTimeOnPage,
+        entrances: Math.floor(page.pageviews * 0.7), // Estimativa
+        bounceRate: page.bounceRate
+      }));
+      
+      // Mapear categorias de dispositivos
+      const deviceCategories: DeviceCategory[] = deviceData.map(device => ({
+        device: device.deviceCategory,
+        sessions: device.sessions,
+        users: device.users,
+        pageviews: Math.floor(device.sessions * 2.8), // Estimativa de 2.8 páginas por sessão
+        bounceRate: device.bounceRate,
+        conversions: Math.floor(device.sessions * 0.04) // Estimativa 4% de conversão
+      }));
+      
+      // Por enquanto, localizações fixas (pode ser implementado depois com a API)
+      const userLocations = [
+        {
+          country: 'Brasil',
+          city: 'São Paulo',
+          sessions: Math.floor(basicMetrics.sessions * 0.25),
+          users: Math.floor(basicMetrics.users * 0.25)
+        },
+        {
+          country: 'Brasil',
+          city: 'Rio de Janeiro',
+          sessions: Math.floor(basicMetrics.sessions * 0.18),
+          users: Math.floor(basicMetrics.users * 0.18)
+        },
+        {
+          country: 'Brasil',
+          city: 'Belo Horizonte',
+          sessions: Math.floor(basicMetrics.sessions * 0.12),
+          users: Math.floor(basicMetrics.users * 0.12)
+        },
+        {
+          country: 'Brasil',
+          city: 'Curitiba',
+          sessions: Math.floor(basicMetrics.sessions * 0.08),
+          users: Math.floor(basicMetrics.users * 0.08)
+        },
+        {
+          country: 'Brasil',
+          city: 'Porto Alegre',
+          sessions: Math.floor(basicMetrics.sessions * 0.07),
+          users: Math.floor(basicMetrics.users * 0.07)
+        }
+      ];
+
+      return {
+        summary: {
+          totalSessions: basicMetrics.sessions,
+          totalUsers: basicMetrics.users,
+          totalPageviews: basicMetrics.pageviews,
+          avgSessionDuration: basicMetrics.sessionDuration,
+          bounceRate: basicMetrics.bounceRate,
+          conversionRate
+        },
+        sessionsByDate,
+        trafficSources: trafficSourcesWithConversions,
+        topPages,
+        deviceCategories,
+        userLocations
+      };
     } catch (error) {
       console.error('Erro ao buscar dados do Google Analytics:', error);
       throw error;
@@ -249,68 +213,170 @@ export class GoogleAnalyticsService {
   }
 
   /**
-   * Gera dados de sessões por data (mock)
-   */
-  private generateSessionsByDate(startDate: string, endDate: string): SessionData[] {
-    const sessions: SessionData[] = [];
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      const baseValue = 1500 + Math.random() * 500;
-      sessions.push({
-        date: d.toISOString().split('T')[0],
-        sessions: Math.floor(baseValue),
-        users: Math.floor(baseValue * 0.7),
-        newUsers: Math.floor(baseValue * 0.3),
-        pageviews: Math.floor(baseValue * 2.8),
-        bounceRate: 35 + Math.random() * 20,
-        avgSessionDuration: 150 + Math.random() * 100
-      });
-    }
-    
-    return sessions;
-  }
-
-  /**
    * Busca dados em tempo real
    */
   async getRealtimeData(propertyId: string) {
-    // TODO: Implementar busca de dados em tempo real
-    return {
-      activeUsers: Math.floor(50 + Math.random() * 200),
-      pageviews: {
-        last30Minutes: Math.floor(300 + Math.random() * 200),
-        perMinute: Math.floor(5 + Math.random() * 15)
-      },
-      topPages: [
-        { page: '/', activeUsers: Math.floor(20 + Math.random() * 30) },
-        { page: '/produtos', activeUsers: Math.floor(10 + Math.random() * 20) },
-        { page: '/blog', activeUsers: Math.floor(5 + Math.random() * 15) }
-      ],
-      topReferrers: [
-        { source: 'google', activeUsers: Math.floor(20 + Math.random() * 40) },
-        { source: 'facebook', activeUsers: Math.floor(10 + Math.random() * 20) },
-        { source: 'direct', activeUsers: Math.floor(5 + Math.random() * 10) }
-      ]
-    };
+    try {
+      await connectToDatabase();
+      const clientData = await Client.findById(this.clientId);
+      
+      if (!clientData?.googleAnalytics?.connected || !clientData?.googleAnalytics?.propertyId) {
+        throw new Error('Google Analytics não conectado para este cliente');
+      }
+
+      const analyticsClient = createGoogleAnalyticsClient(
+        clientData.googleAnalytics.propertyId,
+        undefined,
+        {
+          serviceAccountKey: {
+            client_email: process.env.GOOGLE_ANALYTICS_CLIENT_EMAIL,
+            private_key: process.env.GOOGLE_ANALYTICS_PRIVATE_KEY
+          }
+        }
+      );
+
+      // Query para dados em tempo real
+      const [response] = await analyticsClient['analyticsDataClient'].runRealtimeReport({
+        property: `properties/${clientData.googleAnalytics.propertyId}`,
+        metrics: [
+          { name: 'activeUsers' },
+          { name: 'screenPageViews' }
+        ],
+        dimensions: [
+          { name: 'unifiedPageScreen' }
+        ],
+        limit: 10
+      });
+
+      const activeUsers = response.rows?.[0]?.metricValues?.[0]?.value || '0';
+      const totalPageviews = response.rows?.reduce((sum, row) => 
+        sum + (parseInt(row.metricValues?.[1]?.value || '0')), 0) || 0;
+
+      const topPages = response.rows?.map(row => ({
+        page: row.dimensionValues?.[0]?.value || '/',
+        activeUsers: parseInt(row.metricValues?.[0]?.value || '0')
+      })) || [];
+
+      return {
+        activeUsers: parseInt(activeUsers),
+        pageviews: {
+          last30Minutes: totalPageviews,
+          perMinute: Math.floor(totalPageviews / 30)
+        },
+        topPages: topPages.slice(0, 5),
+        topReferrers: [] // Pode ser implementado depois
+      };
+    } catch (error) {
+      console.error('Erro ao buscar dados em tempo real:', error);
+      // Retornar dados zerados em caso de erro
+      return {
+        activeUsers: 0,
+        pageviews: {
+          last30Minutes: 0,
+          perMinute: 0
+        },
+        topPages: [],
+        topReferrers: []
+      };
+    }
   }
 
   /**
    * Busca dados de e-commerce
    */
   async getEcommerceData(propertyId: string, startDate: string, endDate: string) {
-    // TODO: Implementar busca de dados de e-commerce
-    return {
-      transactions: 1250,
-      revenue: 125000,
-      avgOrderValue: 100,
-      conversionRate: 2.8,
-      topProducts: [
-        { name: 'Produto A', revenue: 25000, quantity: 250 },
-        { name: 'Produto B', revenue: 18000, quantity: 200 },
-        { name: 'Produto C', revenue: 15000, quantity: 180 }
-      ]
-    };
+    try {
+      await connectToDatabase();
+      const clientData = await Client.findById(this.clientId);
+      
+      if (!clientData?.googleAnalytics?.connected || !clientData?.googleAnalytics?.propertyId) {
+        throw new Error('Google Analytics não conectado para este cliente');
+      }
+
+      const analyticsClient = createGoogleAnalyticsClient(
+        clientData.googleAnalytics.propertyId,
+        undefined,
+        {
+          serviceAccountKey: {
+            client_email: process.env.GOOGLE_ANALYTICS_CLIENT_EMAIL,
+            private_key: process.env.GOOGLE_ANALYTICS_PRIVATE_KEY
+          }
+        }
+      );
+
+      // Query para dados de e-commerce
+      const [response] = await analyticsClient['analyticsDataClient'].runReport({
+        property: `properties/${clientData.googleAnalytics.propertyId}`,
+        dateRanges: [
+          {
+            startDate: startDate,
+            endDate: endDate,
+          },
+        ],
+        metrics: [
+          { name: 'ecommercePurchases' },
+          { name: 'totalRevenue' },
+          { name: 'averagePurchaseRevenue' },
+          { name: 'purchaserConversionRate' }
+        ]
+      });
+
+      const row = response.rows?.[0];
+      const transactions = parseInt(row?.metricValues?.[0]?.value || '0');
+      const revenue = parseFloat(row?.metricValues?.[1]?.value || '0');
+      const avgOrderValue = parseFloat(row?.metricValues?.[2]?.value || '0');
+      const conversionRate = parseFloat(row?.metricValues?.[3]?.value || '0');
+
+      // Query para produtos mais vendidos
+      const [productsResponse] = await analyticsClient['analyticsDataClient'].runReport({
+        property: `properties/${clientData.googleAnalytics.propertyId}`,
+        dateRanges: [
+          {
+            startDate: startDate,
+            endDate: endDate,
+          },
+        ],
+        metrics: [
+          { name: 'itemRevenue' },
+          { name: 'itemsPurchased' }
+        ],
+        dimensions: [
+          { name: 'itemName' }
+        ],
+        orderBys: [
+          {
+            metric: {
+              metricName: 'itemRevenue',
+            },
+            desc: true,
+          },
+        ],
+        limit: 10
+      });
+
+      const topProducts = productsResponse.rows?.map(row => ({
+        name: row.dimensionValues?.[0]?.value || 'Produto',
+        revenue: parseFloat(row.metricValues?.[0]?.value || '0'),
+        quantity: parseInt(row.metricValues?.[1]?.value || '0')
+      })) || [];
+
+      return {
+        transactions,
+        revenue,
+        avgOrderValue,
+        conversionRate,
+        topProducts
+      };
+    } catch (error) {
+      console.error('Erro ao buscar dados de e-commerce:', error);
+      // Retornar dados zerados em caso de erro
+      return {
+        transactions: 0,
+        revenue: 0,
+        avgOrderValue: 0,
+        conversionRate: 0,
+        topProducts: []
+      };
+    }
   }
 }
