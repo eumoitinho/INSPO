@@ -56,7 +56,7 @@ interface ClientSettings {
 }
 
 interface ConfiguracoesPageProps {
-  params: { clientId: string }
+  params: Promise<{ clientId: string }>
 }
 
 const SettingSection = ({ title, children, icon: Icon }: { 
@@ -77,7 +77,8 @@ const SettingSection = ({ title, children, icon: Icon }: {
   </Card>
 )
 
-export default function ConfiguracoesPage({ params }: ConfiguracoesPageProps) {
+export default async function ConfiguracoesPage({ params }: ConfiguracoesPageProps) {
+  const resolvedParams = await params
   const [settings, setSettings] = useState<ClientSettings | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -86,14 +87,14 @@ export default function ConfiguracoesPage({ params }: ConfiguracoesPageProps) {
 
   useEffect(() => {
     fetchSettings()
-  }, [params.clientId])
+  }, [resolvedParams.clientId])
 
   const fetchSettings = async () => {
     try {
       setIsLoading(true)
       setError(null)
       
-      const response = await fetch(`/api/admin/clients/${params.clientId}`)
+      const response = await fetch(`/api/admin/clients/${resolvedParams.clientId}`)
       const data = await response.json()
       
       if (response.ok) {
@@ -115,7 +116,7 @@ export default function ConfiguracoesPage({ params }: ConfiguracoesPageProps) {
       setIsSaving(true)
       setSaveSuccess(false)
       
-      const response = await fetch(`/api/admin/clients/${params.clientId}`, {
+      const response = await fetch(`/api/admin/clients/${resolvedParams.clientId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

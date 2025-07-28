@@ -37,7 +37,7 @@ interface Campaign {
 }
 
 interface CampaignsPageProps {
-  params: { client: string }
+  params: Promise<{ clientId: string }>
 }
 
 const StatCard = ({ title, value, icon: Icon, color, subtitle }: { 
@@ -102,7 +102,8 @@ const getPlatformIcon = (platform: string) => {
   }
 }
 
-export default function CampaignsPage({ params }: CampaignsPageProps) {
+export default async function CampaignsPage({ params }: CampaignsPageProps) {
+  const resolvedParams = await params
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -111,7 +112,7 @@ export default function CampaignsPage({ params }: CampaignsPageProps) {
 
   useEffect(() => {
     fetchCampaigns()
-  }, [params.client])
+  }, [resolvedParams.clientId])
 
   const fetchCampaigns = async () => {
     try {
@@ -119,7 +120,7 @@ export default function CampaignsPage({ params }: CampaignsPageProps) {
       setError(null)
       
       // Buscar campanhas do cliente
-      const response = await fetch(`/api/campaigns/${params.client}`)
+      const response = await fetch(`/api/campaigns/${resolvedParams.clientId}`)
       
       if (response.ok) {
         const data = await response.json()
@@ -247,7 +248,7 @@ export default function CampaignsPage({ params }: CampaignsPageProps) {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Campanhas - {params.client}
+              Campanhas - {resolvedParams.clientId}
             </h1>
             <p className="text-gray-500 dark:text-gray-400">
               Gerencie suas campanhas publicitárias

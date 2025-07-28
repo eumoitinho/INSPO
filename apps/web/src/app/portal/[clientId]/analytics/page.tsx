@@ -38,7 +38,7 @@ interface AnalyticsData {
 }
 
 interface AnalyticsPageProps {
-  params: { client: string }
+  params: Promise<{ clientId: string }>
 }
 
 const StatCard = ({ title, value, icon: Icon, color, subtitle }: { 
@@ -60,14 +60,15 @@ const StatCard = ({ title, value, icon: Icon, color, subtitle }: {
   </Card>
 )
 
-export default function AnalyticsPage({ params }: AnalyticsPageProps) {
+export default async function AnalyticsPage({ params }: AnalyticsPageProps) {
+  const resolvedParams = await params
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchAnalyticsData()
-  }, [params.client])
+  }, [resolvedParams.clientId])
 
   const fetchAnalyticsData = async () => {
     try {
@@ -75,7 +76,7 @@ export default function AnalyticsPage({ params }: AnalyticsPageProps) {
       setError(null)
       
       // Buscar dados de analytics do cliente
-      const response = await fetch(`/api/analytics/${params.client}`)
+      const response = await fetch(`/api/analytics/${resolvedParams.clientId}`)
       const data = await response.json()
       
       if (response.ok) {
@@ -159,7 +160,7 @@ export default function AnalyticsPage({ params }: AnalyticsPageProps) {
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Analytics - {params.client}
+            Analytics - {resolvedParams.clientId}
           </h1>
           <p className="text-gray-500 dark:text-gray-400">
             Dados de {new Date(analyticsData.dateRange.start).toLocaleDateString('pt-BR')} a {new Date(analyticsData.dateRange.end).toLocaleDateString('pt-BR')}

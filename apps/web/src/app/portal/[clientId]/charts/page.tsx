@@ -26,7 +26,7 @@ interface ChartData {
 }
 
 interface ChartsPageProps {
-  params: { client: string }
+  params: Promise<{ clientId: string }>
 }
 
 const ChartCard = ({ title, children, className }: { 
@@ -138,7 +138,8 @@ const SimpleLineChart = ({ data, height = 200 }: { data: ChartData, height?: num
   )
 }
 
-export default function ChartsPage({ params }: ChartsPageProps) {
+export default async function ChartsPage({ params }: ChartsPageProps) {
+  const resolvedParams = await params
   const [chartsData, setChartsData] = useState<{
     performance: ChartData
     traffic: ChartData
@@ -150,7 +151,7 @@ export default function ChartsPage({ params }: ChartsPageProps) {
 
   useEffect(() => {
     fetchChartsData()
-  }, [params.client])
+  }, [resolvedParams.clientId])
 
   const fetchChartsData = async () => {
     try {
@@ -158,7 +159,7 @@ export default function ChartsPage({ params }: ChartsPageProps) {
       setError(null)
       
       // Buscar dados de charts do cliente
-      const response = await fetch(`/api/charts/${params.client}`)
+      const response = await fetch(`/api/charts/${resolvedParams.clientId}`)
       
       if (response.ok) {
         const data = await response.json()
@@ -241,7 +242,7 @@ export default function ChartsPage({ params }: ChartsPageProps) {
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Gráficos - {params.client}
+            Gráficos - {resolvedParams.clientId}
           </h1>
           <p className="text-gray-500 dark:text-gray-400">
             Visualize seus dados em gráficos interativos

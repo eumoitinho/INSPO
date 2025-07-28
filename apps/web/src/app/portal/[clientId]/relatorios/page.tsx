@@ -35,7 +35,7 @@ interface Report {
 }
 
 interface RelatoriosPageProps {
-  params: { client: string }
+  params: Promise<{ clientId: string }>
 }
 
 const ReportCard = ({ report, onDownload, onView }: { 
@@ -156,7 +156,8 @@ const ReportCard = ({ report, onDownload, onView }: {
   )
 }
 
-export default function RelatoriosPage({ params }: RelatoriosPageProps) {
+export default async function RelatoriosPage({ params }: RelatoriosPageProps) {
+  const resolvedParams = await params
   const [reports, setReports] = useState<Report[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -165,14 +166,14 @@ export default function RelatoriosPage({ params }: RelatoriosPageProps) {
 
   useEffect(() => {
     fetchReports()
-  }, [params.client])
+  }, [resolvedParams.clientId])
 
   const fetchReports = async () => {
     try {
       setIsLoading(true)
       setError(null)
       
-      const response = await fetch(`/api/reports/${params.client}`)
+      const response = await fetch(`/api/reports/${resolvedParams.clientId}`)
       
       if (response.ok) {
         const data = await response.json()
@@ -312,7 +313,7 @@ export default function RelatoriosPage({ params }: RelatoriosPageProps) {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Relatórios - {params.client}
+              Relatórios - {resolvedParams.clientId}
             </h1>
             <p className="text-gray-500 dark:text-gray-400">
               Gerencie e visualize seus relatórios

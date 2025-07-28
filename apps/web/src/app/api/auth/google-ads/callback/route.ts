@@ -24,13 +24,13 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error('OAuth error:', error);
       return NextResponse.redirect(
-        `${process.env.NEXTAUTH_URL}/edit-client/${state}?error=oauth_denied`
+        `${process.env.NEXTAUTH_URL}/admin/clients?error=oauth_denied`
       );
     }
 
     if (!code || !state) {
       return NextResponse.redirect(
-        `${process.env.NEXTAUTH_URL}/edit-client/${state}?error=invalid_callback`
+        `${process.env.NEXTAUTH_URL}/admin/clients?error=invalid_callback`
       );
     }
 
@@ -88,17 +88,21 @@ export async function GET(request: NextRequest) {
     console.log('✅ Google Ads conectado para cliente:', state);
     console.log('🎯 Contas encontradas:', customerAccounts.length);
 
-    // Redirecionar de volta para a página de edição do cliente
-    return NextResponse.redirect(
-      `${process.env.NEXTAUTH_URL}/edit-client/${state}?success=google_ads_connected&accounts=${customerAccounts.length}`
-    );
+    // Redirecionar de volta para a página de detalhes do cliente
+    // Primeiro, buscar o ID do cliente pelo slug
+    const clientData = await (Client as any).findOne({ slug: state });
+    const redirectUrl = clientData?._id 
+      ? `${process.env.NEXTAUTH_URL}/admin/clients/${clientData._id}?success=google_ads_connected&accounts=${customerAccounts.length}`
+      : `${process.env.NEXTAUTH_URL}/admin/clients?success=google_ads_connected`;
+    
+    return NextResponse.redirect(redirectUrl);
 
   } catch (error: any) {
     console.error('Erro no callback OAuth Google Ads:', error);
     
     const state = new URL(request.url).searchParams.get('state');
     return NextResponse.redirect(
-      `${process.env.NEXTAUTH_URL}/edit-client/${state}?error=oauth_callback_failed`
+      `${process.env.NEXTAUTH_URL}/admin/clients?error=oauth_callback_failed`
     );
   }
 }
