@@ -86,6 +86,14 @@ export async function GET(request: NextRequest) {
     const accountsResponse = await fetch(`https://graph.facebook.com/v19.0/me/adaccounts?access_token=${accessToken}&fields=id,name,account_status`);
     const accountsData = await accountsResponse.json();
 
+    // Obter pixels da conta
+    const pixelsResponse = await fetch(`https://graph.facebook.com/v19.0/me/adspixels?access_token=${accessToken}&fields=id,name,code`);
+    const pixelsData = await pixelsResponse.json();
+
+    // Pegar o primeiro pixel e primeira conta disponíveis
+    const firstPixel = pixelsData.data?.[0];
+    const firstAccount = accountsData.data?.[0];
+
     // Salvar credenciais criptografadas
     const credentials = {
       accessToken,
@@ -93,12 +101,14 @@ export async function GET(request: NextRequest) {
       expiresIn: tokenData.expires_in,
       user: userData,
       accounts: accountsData.data || [],
+      pixels: pixelsData.data || [],
       obtainedAt: new Date().toISOString(),
     };
 
     const encryptedCredentials = encryptData(JSON.stringify(credentials));
 
     // Atualizar cliente com as credenciais do Facebook
+    // Automaticamente configurar o primeiro pixel e conta encontrados
     await (Client as any).updateOne(
       { slug: state },
       {
@@ -108,6 +118,10 @@ export async function GET(request: NextRequest) {
           'facebookAds.lastSync': new Date(),
           'facebookAds.user': userData,
           'facebookAds.accounts': accountsData.data || [],
+          'facebookAds.pixels': pixelsData.data || [],
+          'facebookAds.pixelId': firstPixel?.id || null,
+          'facebookAds.adAccountId': firstAccount?.id?.replace('act_', '') || null,
+          'facebookAds.accessToken': encryptData(accessToken),
           updatedAt: new Date(),
         },
       }
@@ -115,9 +129,12 @@ export async function GET(request: NextRequest) {
 
     console.log(`Facebook Ads OAuth successful for client: ${state}`);
 
-    // Redirecionar para página de sucesso
+    // Buscar o ID do cliente para redirecionar corretamente
+    const clientObj = await (Client as any).findOne({ slug: state });
+    
+    // Redirecionar para página de detalhes do cliente
     return NextResponse.redirect(
-      `${process.env.NEXTAUTH_URL}/clients?success=facebook_connected&message=Facebook Ads conectado com sucesso`
+      `${process.env.NEXTAUTH_URL}/admin/clients/${clientObj._id}?success=facebook_connected&message=Facebook conectado com sucesso! Pixel e Account ID configurados automaticamente.`
     );
 
   } catch (error: any) {

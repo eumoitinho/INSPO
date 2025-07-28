@@ -26,6 +26,7 @@ import { formatCurrency } from "@/lib/utils"
 import { GoogleAdsModal } from "@/components/integrations/GoogleAdsModal"
 import { GoogleAnalyticsModal } from "@/components/integrations/GoogleAnalyticsModal"
 import { FacebookPixelModal } from "@/components/integrations/FacebookPixelModal"
+import { FacebookOAuthModal } from "@/components/integrations/FacebookOAuthModal"
 
 interface ClientData {
   _id: string
@@ -69,6 +70,7 @@ export default function ClientDetailsPage() {
   const [googleAdsModalOpen, setGoogleAdsModalOpen] = useState(false)
   const [googleAnalyticsModalOpen, setGoogleAnalyticsModalOpen] = useState(false)
   const [facebookPixelModalOpen, setFacebookPixelModalOpen] = useState(false)
+  const [facebookOAuthModalOpen, setFacebookOAuthModalOpen] = useState(false)
 
   useEffect(() => {
     fetchClientDetails()
@@ -335,10 +337,10 @@ export default function ClientDetailsPage() {
                     variant="outline"
                     size="sm"
                     className="flex-1"
-                    onClick={() => setFacebookPixelModalOpen(true)}
+                    onClick={() => setFacebookOAuthModalOpen(true)}
                   >
                     <Settings className="h-4 w-4 mr-2" />
-                    Configurar
+                    Conectar
                   </Button>
                   {client.facebookAds?.connected && (
                     <Button
@@ -480,6 +482,14 @@ export default function ClientDetailsPage() {
         isOpen={facebookPixelModalOpen}
         onClose={() => setFacebookPixelModalOpen(false)}
         clientId={clientId}
+        onSuccess={fetchClientDetails}
+      />
+
+      <FacebookOAuthModal
+        isOpen={facebookOAuthModalOpen}
+        onClose={() => setFacebookOAuthModalOpen(false)}
+        clientId={clientId}
+        clientSlug={client.slug}
         onSuccess={fetchClientDetails}
       />
     </div>

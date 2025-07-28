@@ -70,7 +70,7 @@ export function FacebookPixelModal({ isOpen, onClose, clientId, onSuccess }: Fac
         <DialogHeader>
           <DialogTitle>Configurar Facebook Pixel</DialogTitle>
           <DialogDescription>
-            Configure o Facebook Pixel e as credenciais da API para sincronizar campanhas.
+            Configure o Facebook Pixel para rastreamento de conversões.
           </DialogDescription>
         </DialogHeader>
 
@@ -85,17 +85,7 @@ export function FacebookPixelModal({ isOpen, onClose, clientId, onSuccess }: Fac
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:underline inline-flex items-center"
               >
-                Facebook Events Manager
-                <ExternalLink className="h-3 w-3 ml-1" />
-              </a>
-              {" "}e o{" "}
-              <a 
-                href="https://developers.facebook.com/apps" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:underline inline-flex items-center"
-              >
-                Facebook Developers
+                Facebook Business Manager
                 <ExternalLink className="h-3 w-3 ml-1" />
               </a>
             </AlertDescription>
@@ -118,33 +108,33 @@ export function FacebookPixelModal({ isOpen, onClose, clientId, onSuccess }: Fac
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="access_token">
-                Access Token <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="access_token"
-                type="password"
-                placeholder="Seu access token de longa duração"
-                value={credentials.access_token}
-                onChange={(e) => setCredentials({ ...credentials, access_token: e.target.value })}
-              />
-              <p className="text-xs text-muted-foreground">
-                Gere um token de longa duração no Facebook Developers
-              </p>
-            </div>
-
-            <div className="grid gap-2">
               <Label htmlFor="ad_account_id">
-                Ad Account ID (Opcional)
+                Account ID <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="ad_account_id"
-                placeholder="Ex: act_1234567890"
+                placeholder="Ex: 1234567890 (apenas números)"
                 value={credentials.ad_account_id}
                 onChange={(e) => setCredentials({ ...credentials, ad_account_id: e.target.value })}
               />
               <p className="text-xs text-muted-foreground">
-                Para sincronizar dados de campanhas (formato: act_XXXXXXXXXX)
+                ID da sua conta de anúncios (sem o prefixo act_)
+              </p>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="access_token">
+                Access Token (Opcional)
+              </Label>
+              <Input
+                id="access_token"
+                type="password"
+                placeholder="Token para sincronizar dados de campanhas"
+                value={credentials.access_token}
+                onChange={(e) => setCredentials({ ...credentials, access_token: e.target.value })}
+              />
+              <p className="text-xs text-muted-foreground">
+                Necessário apenas para importar dados de campanhas
               </p>
             </div>
 
@@ -183,8 +173,8 @@ export function FacebookPixelModal({ isOpen, onClose, clientId, onSuccess }: Fac
           <Alert variant="default" className="bg-blue-50 border-blue-200">
             <Info className="h-4 w-4 text-blue-600" />
             <AlertDescription className="text-sm text-blue-800">
-              <strong>Dica:</strong> Para campanhas do Facebook/Instagram, você precisará do Ad Account ID. 
-              Para apenas rastreamento de conversões, Pixel ID e Access Token são suficientes.
+              <strong>Configuração Simples:</strong> Apenas Pixel ID e Account ID são necessários para rastreamento. 
+              O Access Token é opcional e só necessário se você quiser importar dados de campanhas.
             </AlertDescription>
           </Alert>
         </div>
