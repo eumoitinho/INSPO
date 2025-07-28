@@ -1,0 +1,24 @@
+Módulo: {{MODULE_NAME}}
+Arquivo atual: {{FILE_PATH}}
+Contexto: {{COMPRESSED_CONTEXT}}
+
+Refatore para:
+1. Seguir padrões DDD identificados
+2. Melhorar separação de responsabilidades
+3. Aplicar patterns: {{PATTERNS}}
+4. Manter compatibilidade com: {{DEPENDENCIES}}
+
+Código atual:
+```typescript
+{{CURRENT_CODE}}
+```
+
+Diretrizes de refatoração:
+- Extraia lógica de negócio para domain services
+- Mova validações para DTOs com Zod
+- Implemente interfaces para inversão de dependência
+- Adicione testes unitários se necessário
+- Mantenha retrocompatibilidade
+
+Foque em:
+{{REFACTOR_FOCUS}}

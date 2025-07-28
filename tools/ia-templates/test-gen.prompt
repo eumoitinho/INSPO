@@ -1,0 +1,28 @@
+Módulo: {{MODULE_NAME}}
+Arquivo a testar: {{FILE_PATH}}
+Tipo: {{TEST_TYPE}} (unit/integration/e2e)
+
+Contexto do módulo:
+{{COMPRESSED_CONTEXT}}
+
+Código a testar:
+```typescript
+{{CODE_TO_TEST}}
+```
+
+Gere testes seguindo:
+- Framework: Jest + Testing Library (se React)
+- Cobertura mínima: 80%
+- Mocks para dependências externas
+- Casos de borda e erros
+- Nomenclatura: describe/it pattern
+
+Estrutura dos testes:
+1. Setup e mocks
+2. Casos de sucesso
+3. Casos de erro
+4. Edge cases
+5. Cleanup
+
+Considere:
+{{TEST_CONSIDERATIONS}}

@@ -1,0 +1,28 @@
+Migração de {{SOURCE_PATH}} para arquitetura DDD
+
+Estrutura atual:
+{{CURRENT_STRUCTURE}}
+
+Destino na nova arquitetura:
+- Módulo: {{TARGET_MODULE}}
+- Camada: {{TARGET_LAYER}}
+- Path: {{TARGET_PATH}}
+
+Contexto do módulo destino:
+{{MODULE_CONTEXT}}
+
+Tarefas de migração:
+1. Separar responsabilidades em camadas DDD
+2. Extrair entities/value objects do domain
+3. Criar use cases na application layer
+4. Implementar repositories na infrastructure
+5. Mover UI components para presentation
+
+Transformações necessárias:
+{{TRANSFORMATIONS}}
+
+Dependências a atualizar:
+{{DEPENDENCIES_TO_UPDATE}}
+
+Manter compatibilidade com:
+{{COMPATIBILITY_REQUIREMENTS}}

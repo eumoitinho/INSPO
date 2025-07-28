@@ -1,0 +1,20 @@
+Baseado no contexto do módulo {{MODULE_NAME}}:
+{{COMPRESSED_CONTEXT}}
+
+Gere um {{ARTIFACT_TYPE}} seguindo:
+- Padrões DDD da camada {{LAYER}}
+- Convenções: {{CONVENTIONS}}
+- Dependências permitidas: {{DEPENDENCIES}}
+
+Requisitos específicos:
+{{REQUIREMENTS}}
+
+Estrutura esperada:
+- Use TypeScript com tipagem forte
+- Siga os patterns identificados no módulo
+- Mantenha consistência com arquivos existentes
+- Adicione JSDoc para documentação
+- Implemente tratamento de erros apropriado
+
+Exemplo de output esperado para {{ARTIFACT_TYPE}}:
+{{EXAMPLE_OUTPUT}}

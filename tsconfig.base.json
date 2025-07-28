@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "target": "ES6",
+    "skipLibCheck": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "declaration": true,
+    "declarationMap": true,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@ninetwodash/auth": ["./modules/auth/src"],
+      "@ninetwodash/auth/*": ["./modules/auth/src/*"],
+      "@ninetwodash/clients": ["./modules/clients/src"],
+      "@ninetwodash/clients/*": ["./modules/clients/src/*"],
+      "@ninetwodash/campaigns": ["./modules/campaigns/src"],
+      "@ninetwodash/campaigns/*": ["./modules/campaigns/src/*"],
+      "@ninetwodash/analytics": ["./modules/analytics/src"],
+      "@ninetwodash/analytics/*": ["./modules/analytics/src/*"],
+      "@ninetwodash/integrations": ["./modules/integrations/src"],
+      "@ninetwodash/integrations/*": ["./modules/integrations/src/*"],
+      "@ninetwodash/dashboard": ["./modules/dashboard/src"],
+      "@ninetwodash/dashboard/*": ["./modules/dashboard/src/*"],
+      "@ninetwodash/ui": ["./packages/ui/src"],
+      "@ninetwodash/ui/*": ["./packages/ui/src/*"],
+      "@ninetwodash/shared": ["./packages/shared/src"],
+      "@ninetwodash/shared/*": ["./packages/shared/src/*"],
+      "@/infrastructure/*": ["./infrastructure/*"]
+    }
+  }
+}
