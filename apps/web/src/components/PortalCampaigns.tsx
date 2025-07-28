@@ -124,61 +124,8 @@ export default function PortalCampaigns({ clientSlug }: PortalCampaignsProps) {
         const data = await response.json()
         setCampaigns(data.data || [])
       } else {
-        // Se não há dados reais, usar dados simulados
-        const mockCampaigns: Campaign[] = [
-          {
-            _id: '1',
-            name: 'Campanha de Conversão Q4',
-            platform: 'google',
-            status: 'active',
-            budget: 5000,
-            spent: 3200,
-            impressions: 45000,
-            clicks: 1200,
-            conversions: 45,
-            ctr: 2.67,
-            cpc: 2.67,
-            roas: 3.2,
-            startDate: '2024-10-01',
-            targetAudience: 'Interesse em produtos',
-            objective: 'Conversões'
-          },
-          {
-            _id: '2',
-            name: 'Awareness Facebook',
-            platform: 'facebook',
-            status: 'active',
-            budget: 3000,
-            spent: 1800,
-            impressions: 25000,
-            clicks: 800,
-            conversions: 25,
-            ctr: 3.2,
-            cpc: 2.25,
-            roas: 2.8,
-            startDate: '2024-10-15',
-            targetAudience: 'Demográfica 25-45',
-            objective: 'Reconhecimento'
-          },
-          {
-            _id: '3',
-            name: 'Instagram Stories',
-            platform: 'instagram',
-            status: 'paused',
-            budget: 2000,
-            spent: 1200,
-            impressions: 18000,
-            clicks: 600,
-            conversions: 18,
-            ctr: 3.33,
-            cpc: 2.0,
-            roas: 2.5,
-            startDate: '2024-09-20',
-            targetAudience: 'Jovens adultos',
-            objective: 'Engajamento'
-          }
-        ]
-        setCampaigns(mockCampaigns)
+        // Sem dados mock - apenas array vazio
+        setCampaigns([])
       }
     } catch (err) {
       setError('Erro ao carregar campanhas')

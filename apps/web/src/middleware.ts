@@ -259,6 +259,11 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const clientIP = getClientIP(request);
   
+  // Skip authentication for public pages
+  if (pathname === '/privacy' || pathname === '/terms') {
+    return NextResponse.next();
+  }
+
   // Handle authentication for protected routes
   if (!pathname.startsWith('/api/')) {
     return await handleAuthentication(request);

@@ -138,7 +138,7 @@ export class DashboardService {
         },
         channelPerformance: this.buildChannelPerformance(gAds, fbAds),
         topCampaigns: this.buildTopCampaigns(gAds, fbAds),
-        dailyMetrics: this.buildDailyMetrics(startDateStr, endDateStr, googleAds, facebookAds, analytics),
+        dailyMetrics: this.buildDailyMetrics(startDateStr, endDateStr, gAds, fbAds, analytics),
         devicePerformance: this.buildDevicePerformance(analytics)
       };
 
