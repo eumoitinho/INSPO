@@ -18,14 +18,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const activeClients = clients.filter(client => client.status === 'active').length;
     const totalRevenue = clients.reduce((sum, client) => sum + (client.monthlyBudget || 0), 0);
     
-    // Calculate average conversion rate (mock for now)
-    const avgConversionRate = 3.2; // This would come from actual analytics data
-    
-    // Calculate total spend (mock for now)
-    const totalSpend = totalRevenue * 0.3; // Assuming 30% of revenue is spent on ads
-    
-    // Calculate total conversions (mock for now)
-    const totalConversions = Math.round(totalSpend * (avgConversionRate / 100));
+    // Calculate from real data - default to 0 if no data
+    const avgConversionRate = 0;
+    const totalSpend = 0;
+    const totalConversions = 0;
     
     const stats = {
       totalClients,
