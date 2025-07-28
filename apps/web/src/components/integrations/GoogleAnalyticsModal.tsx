@@ -20,10 +20,11 @@ interface GoogleAnalyticsModalProps {
   isOpen: boolean
   onClose: () => void
   clientId: string
+  clientSlug: string
   onSuccess: () => void
 }
 
-export function GoogleAnalyticsModal({ isOpen, onClose, clientId, onSuccess }: GoogleAnalyticsModalProps) {
+export function GoogleAnalyticsModal({ isOpen, onClose, clientId, clientSlug, onSuccess }: GoogleAnalyticsModalProps) {
   const [loading, setLoading] = useState(false)
   const [credentials, setCredentials] = useState({
     property_id: "",
@@ -34,7 +35,7 @@ export function GoogleAnalyticsModal({ isOpen, onClose, clientId, onSuccess }: G
 
   const handleOAuthConnect = async () => {
     // Inicia o fluxo OAuth
-    const authUrl = `/api/auth/google-analytics?clientId=${clientId}`
+    const authUrl = `/api/auth/google-analytics?clientSlug=${clientSlug}`
     window.location.href = authUrl
   }
 

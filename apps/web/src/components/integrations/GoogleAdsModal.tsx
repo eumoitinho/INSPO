@@ -20,10 +20,11 @@ interface GoogleAdsModalProps {
   isOpen: boolean
   onClose: () => void
   clientId: string
+  clientSlug: string
   onSuccess: () => void
 }
 
-export function GoogleAdsModal({ isOpen, onClose, clientId, onSuccess }: GoogleAdsModalProps) {
+export function GoogleAdsModal({ isOpen, onClose, clientId, clientSlug, onSuccess }: GoogleAdsModalProps) {
   const [loading, setLoading] = useState(false)
   const [credentials, setCredentials] = useState({
     customer_id: "",
@@ -35,7 +36,7 @@ export function GoogleAdsModal({ isOpen, onClose, clientId, onSuccess }: GoogleA
 
   const handleOAuthConnect = async () => {
     // Inicia o fluxo OAuth
-    const authUrl = `/api/auth/google-ads?clientId=${clientId}`
+    const authUrl = `/api/auth/google-ads?clientSlug=${clientSlug}`
     window.location.href = authUrl
   }
 

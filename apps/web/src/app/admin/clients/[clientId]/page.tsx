@@ -464,6 +464,7 @@ export default function ClientDetailsPage() {
         isOpen={googleAdsModalOpen}
         onClose={() => setGoogleAdsModalOpen(false)}
         clientId={clientId}
+        clientSlug={client.slug}
         onSuccess={fetchClientDetails}
       />
 
@@ -471,6 +472,7 @@ export default function ClientDetailsPage() {
         isOpen={googleAnalyticsModalOpen}
         onClose={() => setGoogleAnalyticsModalOpen(false)}
         clientId={clientId}
+        clientSlug={client.slug}
         onSuccess={fetchClientDetails}
       />
 
